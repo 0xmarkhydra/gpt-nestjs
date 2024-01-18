@@ -20,6 +20,19 @@ export class AiBotController {
   
   @Post('crawl-web')
   crawlWeb(@Body() body: CrawlWebDto) {
-    return this.aiBotService.crawlWeb(body.url);
+    return this.aiBotService.crawlWebApp(body.url);
+  }
+
+  @Post('crawl-web-puppeteer')
+  crawlWebPuppeteer(@Body() body: CrawlWebDto) {
+    return this.aiBotService.crawlWebPuppeteer(body.url);
+  }
+  @Post('crawl-gitbook')
+  crawlGitbook(@Body() body: CrawlWebDto) {
+    return this.aiBotService.crawGitbook(body.url);
+  }
+  @Post('crawl-summarize')
+  summarize(@Body() body: CrawlWebDto) {
+    return this.aiBotService.summarize(body.url);
   }
 }
