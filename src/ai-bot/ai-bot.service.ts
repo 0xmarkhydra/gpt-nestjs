@@ -369,9 +369,10 @@ export class AiBotService {
       temperature: 0
     });
     const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
-    const text = data[0].pageContent;
 
-    const docs = await textSplitter.createDocuments([text]);
+    const dataTxt = data.map(item => item.pageContent);
+
+    const docs = await textSplitter.createDocuments(dataTxt);
 
     const chain = loadSummarizationChain(model, {
       type: "map_reduce",
@@ -380,7 +381,7 @@ export class AiBotService {
     const res = await chain.call({
       input_documents: docs,
     });
-    
+
     return res;
   }
 }
