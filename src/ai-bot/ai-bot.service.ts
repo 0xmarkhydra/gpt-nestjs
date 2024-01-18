@@ -19,7 +19,7 @@ import cheerio from 'cheerio';
 import axios from 'axios';
 import puppeteer from 'puppeteer';
 
-const KEY = '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';
+const KEY = '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';
 
 let data = {}
 
@@ -40,7 +40,44 @@ class GetPortfolioTool extends StructuredTool {
       btc: 2,
       whales: 3000,
     };
-    return JSON.stringify(data);
+    // return JSON.stringify(data);
+    return JSON.stringify([
+      {
+        "token_address": '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        "symbol": 'USDT',
+        "name": 'Tether USD',
+        "chain type": "Ethereum Chain",
+        "balance": '89',
+      },
+      {
+        "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+        "symbol": 'USDC',
+        "name": 'USD Coin',
+        "chain type": "Ethereum Chain",
+        "balance": '39',
+      },
+      {
+        "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb57',
+        "symbol": 'USDC',
+        "name": 'USD Coin',
+        "chain type": "Solana Chain",
+        "balance": '3',
+      },
+      {
+        "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce36062545',
+        "symbol": 'ETH',
+        "name": 'ETHEREUM',
+        "chain type": "Ethereum Chain",
+        "balance": '2',
+      },
+      {
+        "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce360CVCN2',
+        "symbol": 'SOL',
+        "name": 'SOLANA',
+        "chain type": "Ethereum Chain",
+        "balance": '9',
+      },
+    ]);
   }
 }
 
@@ -208,8 +245,8 @@ export class AiBotService {
 
   async chatByKeyAssistantV2(createAiBotDto: CreateAiBotDto) {
     const { thread_id, question } = createAiBotDto;
-    // const tools = [new GetPortfolioTool(), new SwapTokenTool()];
-    const tools = [new CrawlWebTool()];
+    const tools = [new GetPortfolioTool(), new SwapTokenTool()];
+    // const tools = [new CrawlWebTool()];
 
     const agent = new OpenAIAssistantRunnable({
       assistantId: 'asst_39pOByzbsVVrgBUOs4hdlInS',
@@ -235,7 +272,13 @@ export class AiBotService {
       content: question,
       threadId: threadId,
       model: 'gpt-4-1106-preview',
-      instructions: "Thư ký tài chính của các nhà đầu tư",
+      instructions:
+        'You are Eve AI\n' +
+        '    Set greeting response is I am Eve AI, Can I help you?\n' +
+        "    Don't show telegram id in the response\n" +
+        '    You can get the balance/portfolio and swap from token A to token B with amount. ' +
+        '    When the user actions swap token, you must confirm with user about input token (address), output token (address), input amount, output amount ' +
+        "    When the user wants to know about balance of a token, If you don't know balance, you return 0",
       name: 'Test Weather Assistant',
     });
 
@@ -274,15 +317,15 @@ export class AiBotService {
           try {
             const page = await browser.newPage();
             await page.goto(url, { waitUntil: 'networkidle0' });
-      
+
             // Wait for the page to fully render
             await page.waitForTimeout(1000);
-      
+
             const htmlContent = await page.content();
             const pageContent = await page.evaluate(() => {
               return document.body.innerText;
             });
-    
+
             return pageContent;
           } catch (error) {
             console.error('[ERROR crawlWebApp]:', error);
@@ -365,14 +408,53 @@ export class AiBotService {
     // const text = fs.readFileSync(url, "utf8");
     const data: any = await this.crawlWebPuppeteer(url);
     const model = new ChatOpenAI({
-      openAIApiKey: "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",
+      openAIApiKey: KEY,
       temperature: 0
     });
     const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
 
     const dataTxt = data.map(item => item.pageContent);
 
-    const docs = await textSplitter.createDocuments(dataTxt);
+    // const docs = await textSplitter.createDocuments(dataTxt);
+    const docs = await textSplitter.createDocuments([JSON.stringify(
+      [
+        {
+          "token_address": '0xdac17f958d2ee523a2206206994597c13d831ec7',
+          "symbol": 'USDT',
+          "name": 'Tether USD',
+          "chain type": "Ethereum Chain",
+          "balance": '89',
+        },
+        {
+          "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+          "symbol": 'USDC',
+          "name": 'USD Coin',
+          "chain type": "Ethereum Chain",
+          "balance": '39',
+        },
+        {
+          "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb57',
+          "symbol": 'USDC',
+          "name": 'USD Coin',
+          "chain type": "Solana Chain",
+          "balance": '3',
+        },
+        {
+          "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce36062545',
+          "symbol": 'ETH',
+          "name": 'ETHEREUM',
+          "chain type": "Ethereum Chain",
+          "balance": '2',
+        },
+        {
+          "token_address": '0xa0b86991c6218b36c1d19d4a2e9eb0ce360CVCN2',
+          "symbol": 'SOL',
+          "name": 'SOLANA',
+          "chain type": "Ethereum Chain",
+          "balance": '9',
+        },
+      ]
+    )]);
 
     const chain = loadSummarizationChain(model, {
       type: "map_reduce",
